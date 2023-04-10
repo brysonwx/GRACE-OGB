@@ -9,8 +9,8 @@
 echo "Hello World! This is my GRACE-OGB-ARXIV job on Slurm."
 nvidia-smi
 echo "CUDA_VISIBLE_DEVICES" $CUDA_VISIBLE_DEVICES
-source /home/tbuweixin/anaconda3/bin/activate ConGCL
+source /home/<username>/anaconda3/bin/activate GRACE-OGB
 which python
-cd /home/tbuweixin/projects/GRACE
+cd /home/<username>/projects/GRACE-OGB
 python train.py --gpu_id 2 --dataset ogbn-arxiv
 echo "Job completed successfully."
