@@ -6,25 +6,6 @@ from tqdm import tqdm
 from eval import print_gpu_used_info
 
 
-class LogReg(nn.Module):
-    def __init__(self, ft_in, nb_classes):
-        super(LogReg, self).__init__()
-        self.fc = nn.Linear(ft_in, nb_classes)
-
-        for m in self.modules():
-            self.weights_init(m)
-
-    def weights_init(self, m):
-        if isinstance(m, nn.Linear):
-            torch.nn.init.xavier_uniform_(m.weight.data)
-            if m.bias is not None:
-                m.bias.data.fill_(0.0)
-
-    def forward(self, seq):
-        ret = self.fc(seq)
-        return ret
-
-
 class SAGEncoder(torch.nn.Module):
     def __init__(self, in_channels, hidden_channels, out_channels, num_layers):
         super().__init__()
@@ -198,22 +179,3 @@ def drop_feature(x, drop_prob):
     x[:, drop_mask] = 0
 
     return x
-
-
-class LogReg(nn.Module):
-    def __init__(self, ft_in, nb_classes):
-        super(LogReg, self).__init__()
-        self.fc = nn.Linear(ft_in, nb_classes)
-
-        for m in self.modules():
-            self.weights_init(m)
-
-    def weights_init(self, m):
-        if isinstance(m, nn.Linear):
-            torch.nn.init.xavier_uniform_(m.weight.data)
-            if m.bias is not None:
-                m.bias.data.fill_(0.0)
-
-    def forward(self, seq):
-        ret = self.fc(seq)
-        return ret

@@ -157,7 +157,7 @@ if __name__ == '__main__':
     learning_rate = config['learning_rate']
     num_hidden = config['num_hidden']
     num_proj_hidden = config['num_proj_hidden']
-    activation = ({'relu': F.relu, 'prelu': nn.PReLU()})[config['activation']]
+    activation = ({'relu': F.relu, 'prelu': nn.PReLU(), 'rrelu': nn.RReLU()})[config['activation']]
     base_model = ({'GCNConv': GCNConv})[config['base_model']]
     num_layers = config['num_layers']
 

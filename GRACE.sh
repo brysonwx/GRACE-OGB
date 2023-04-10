@@ -12,5 +12,5 @@ echo "CUDA_VISIBLE_DEVICES" $CUDA_VISIBLE_DEVICES
 source /home/<username>/anaconda3/bin/activate GRACE-OGB
 which python
 cd /home/<username>/projects/GRACE-OGB
-python train.py --gpu_id 2 --dataset ogbn-arxiv
+python train.py --gpu_id 0 --dataset ogbn-arxiv
 echo "Job completed successfully."
