@@ -130,7 +130,7 @@ class LogReg(nn.Module):
     def forward(self, seq):
         ret = self.fc(seq)
         return ret
-    
+
     
 def log_regression(z,
                    dataset,

@@ -90,34 +90,70 @@ def train(model: Model, x, edge_index):
 def train_ogb(model: Model, x, edge_index, split_idx):
     model.train()
     optimizer.zero_grad()
-    
-    edge_index_1 = dropout_adj(edge_index, p=drop_edge_rate_1)[0]
-    edge_index_2 = dropout_adj(edge_index, p=drop_edge_rate_2)[0]
-    x_1 = drop_feature(x, drop_feature_rate_1)
-    x_2 = drop_feature(x, drop_feature_rate_2)
-
     train_idx = split_idx['train']
-    total_loss = 0
-    train_loader1 = NeighborSampler(edge_index_1.to(device), node_idx=train_idx.to(device),
+    train_loader = NeighborSampler(edge_index.to(device), node_idx=train_idx.to(device),
                                 sizes=[15, 10, 5], batch_size=1024,
-                                shuffle=False, num_workers=12)
-    train_loader2 = NeighborSampler(edge_index_2.to(device), node_idx=train_idx.to(device),
-                                sizes=[15, 10, 5], batch_size=1024,
-                                shuffle=False, num_workers=12)
+                                shuffle=True, num_workers=12)
+    pbar = tqdm(total=train_idx.size(0))
+    pbar.set_description(f'Epoch {epoch:02d}')
 
-    for data1, data2 in zip(train_loader1, train_loader2):
-        batch_size1, n_id1, adjs1 = data1
-        adjs1 = [adj.to(device) for adj in adjs1]
-        batch_size2, n_id2, adjs2 = data2
-        adjs2 = [adj.to(device) for adj in adjs2]
-        z1 = model(x_1[n_id1].to(device), adjs1)
-        z2 = model(x_2[n_id2].to(device), adjs2)
+    total_loss = 0
+    for batch_size, n_id, adjs in train_loader:
+        # `adjs` holds a list of `(edge_index, e_id, size)` tuples.
+        adjs1 = []
+        adjs2 = []
+        adjs = [adj.to(device) for adj in adjs]
+        for adj in adjs:
+            e_index, _, size = adj
+            edge_index_1 = dropout_adj(e_index, p=drop_edge_rate_1)[0]
+            edge_index_2 = dropout_adj(e_index, p=drop_edge_rate_2)[0]
+            adj_1 = EdgeIndex(edge_index_1, _, size)
+            adj_2 = EdgeIndex(edge_index_2, _, size)
+            adjs1.append(adj_1)
+            adjs2.append(adj_2)           
+        
+        x_1 = drop_feature(x[n_id], drop_feature_rate_1)
+        x_2 = drop_feature(x[n_id], drop_feature_rate_2)
+        z1 = model(x_1.to(device), adjs1)
+        z2 = model(x_2.to(device), adjs2)
         loss = model.loss(z1, z2, batch_size=0)
         loss.backward()
         optimizer.step()
         total_loss += float(loss)
-    loss = total_loss / len(train_loader1)
+        pbar.update(batch_size)
+    pbar.close()
+    loss = total_loss / len(train_loader)
     return loss
+    # model.train()
+    # optimizer.zero_grad()
+    
+    # edge_index_1 = dropout_adj(edge_index, p=drop_edge_rate_1)[0]
+    # edge_index_2 = dropout_adj(edge_index, p=drop_edge_rate_2)[0]
+    # x_1 = drop_feature(x, drop_feature_rate_1)
+    # x_2 = drop_feature(x, drop_feature_rate_2)
+
+    # train_idx = split_idx['train']
+    # total_loss = 0
+    # train_loader1 = NeighborSampler(edge_index_1.to(device), node_idx=train_idx.to(device),
+    #                             sizes=[15, 10, 5], batch_size=1024,
+    #                             shuffle=False, num_workers=12)
+    # train_loader2 = NeighborSampler(edge_index_2.to(device), node_idx=train_idx.to(device),
+    #                             sizes=[15, 10, 5], batch_size=1024,
+    #                             shuffle=False, num_workers=12)
+
+    # for data1, data2 in zip(train_loader1, train_loader2):
+    #     batch_size1, n_id1, adjs1 = data1
+    #     adjs1 = [adj.to(device) for adj in adjs1]
+    #     batch_size2, n_id2, adjs2 = data2
+    #     adjs2 = [adj.to(device) for adj in adjs2]
+    #     z1 = model(x_1[n_id1].to(device), adjs1)
+    #     z2 = model(x_2[n_id2].to(device), adjs2)
+    #     loss = model.loss(z1, z2, batch_size=0)
+    #     loss.backward()
+    #     optimizer.step()
+    #     total_loss += float(loss)
+    # loss = total_loss / len(train_loader1)
+    # return loss
 
 
 def test(model: Model, x, edge_index, y, final=False):
